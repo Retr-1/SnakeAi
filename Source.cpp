@@ -1,19 +1,15 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 #include "DenseNN.h"
-
-//enum Direction {
-//	NORTH,
-//	EAST,
-//	SOUTH,
-//};
+#include <algorithm>
 
 constexpr int size = 60;
 
 class Snake {
 public:
 	std::vector<olc::vi2d> body;
-	int direction;
+	int direction = 0;
+	int fitness = 0;
 	//static olc::vi2d dirMv[4];
 
 	void moveForward() {
@@ -48,7 +44,6 @@ public:
 		direction %= 4;
 	}
 };
-//olc::vi2d Snake::dirMv = {{0,-1}, {1,0}, {0,1}, {}}
 
 class DenseSnake : public Snake {
 public:
@@ -63,16 +58,7 @@ public:
 		// 1. Turn left
 		// 2. Turn right
 		// 3. Forward
-
 		auto& output = brain.evaluate(input);
-		//float bestVal = output[0];
-		//int bestIndex = 0;
-		//for (int i = 1; i < 3; i++) {
-		//	if (output[i] > bestVal) {
-		//		bestVal = output[i];
-		//		bestIndex = i;
-		//	}
-		//}
 
 		if (output[0] > output[1] && output[0] > output[2]) {
 			turnLeft();
@@ -97,7 +83,7 @@ public:
 class Window : public olc::PixelGameEngine
 {
 
-	std::vector<int> nnShape = { size * size + 3, 100, 3 };
+	std::vector<int> nnShape = { 2, 100, 3 };
 
 	olc::vi2d apple;
 	int nIters = 1;
@@ -106,19 +92,62 @@ class Window : public olc::PixelGameEngine
 	int snakeIndex = 0;
 
 	// INPUTS:
-	// 1. size*size == grid of obstacles, including snake's body
-	// 2. float == pos of head
-	// 3. float == pos of apple
-	// 4. float == direction 
+	// 1. float, pos of head x
+	// 2. float, pos of head y
 	std::vector<float> nnInput;
 
 	void prepareInput() {
 		auto& snake = snakes[snakeIndex];
-		std::fill(nnInput.begin(), nnInput.begin() + size * size, 0);
-		for (int i = 0; i < snake.body.size(); i++) {
-			nnInput[snake.body[i].x + snake.body[i].y * size] = 1;
+		olc::vi2d& head = snake.body[0];
+		nnInput[0] = head.x / (float)size;
+		nnInput[1] = head.y / (float)size;
+	}
+
+	void draw(DenseSnake& snake) {
+		for (olc::vi2d& pos : snake.body) {
+			Draw(pos);
 		}
-		nnInput[size*size] = snake.body[snake.body.size()-1]
+	}
+
+	void draw() {
+		Clear(olc::BLACK);
+		draw(snakes[snakeIndex]);
+		Draw(apple, olc::DARK_RED);
+	}
+
+	bool doesSurvive(DenseSnake& snake) {
+		olc::vi2d& head = snake.body[0];
+		if (head.x < 0 || head.x >= size || head.y < 0 || head.y >= size) {
+			return false;
+		}
+		for (int i = 1; i < snake.body.size(); i++) {
+			olc::vi2d& bodyPart = snake.body[i];
+			if (head.x == bodyPart.x && head.y == bodyPart.y) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	olc::vi2d randpos() {
+		return { randint(0,size - 1), randint(0,size - 1) };
+	}
+
+	void makeNextGeneration() {
+		// first n survive and make offspring
+		const int nSurvive = 20;
+		std::sort(snakes.begin(), snakes.end(), [](DenseSnake& lhs, DenseSnake& rhs) {return lhs.fitness > rhs.fitness;});
+
+		std::vector<DenseSnake> newGeneration;
+		for (int i = 0; i < nAgents; i++) {
+			auto& parent1 = snakes[randint(0, nSurvive)];
+			auto& parent2 = snakes[randint(0, nSurvive)];
+			auto&& child = parent1.reproduce(parent2);
+			child.body.push_back({ size / 2,size / 2 });
+			newGeneration.push_back(child);
+		}
+
+		snakes = newGeneration;
 	}
 	
 public:
@@ -137,11 +166,28 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		// Called once per frame, draws random coloured pixels
+		
+		if (snakeIndex == snakes.size()) {
+			snakeIndex = 0;
+			makeNextGeneration();
+		}
+
 		DenseSnake& snake = snakes[snakeIndex];
 		for (int i = 0; i < nIters; i++) {
-			snake.decide()
+			prepareInput();
+			snake.decide(nnInput);
+			snake.moveForward();
+			if (!doesSurvive(snake)) {
+				break;
+			}
+			if (snake.body[0] == apple) {
+				apple = randpos();
+				snake.fitness++;
+			}
 		}
+		draw();
+		snakeIndex++;
+
 		return true;
 	}
 };
