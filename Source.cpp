@@ -10,11 +10,16 @@ class Snake {
 public:
 	std::vector<olc::vi2d> body;
 	int direction = 0;
+	bool grow = false;
 	//static olc::vi2d dirMv[4];
 
 	void moveForward() {
 		olc::vi2d headPos = body[0];
-		body.pop_back();
+
+		if (!grow) {
+			body.pop_back();
+			grow = false;
+		}
 		
 		switch (direction) {
 		case 0:
@@ -88,7 +93,7 @@ class Window : public olc::PixelGameEngine
 	std::vector<float> nnInput;
 
 	std::vector<olc::vi2d> apples;
-	int nIters = 10;
+	int nIters = 1;
 	int nAgents = 100;
 	const int maxRounds = 50;
 	int rounds = 0;
@@ -101,11 +106,7 @@ class Window : public olc::PixelGameEngine
 		for (int i = 0; i < size2; i++) {
 			nnInput[i] = 0;
 		}
-		for (int i = 1; i < snake.body.size(); i++) {
-			olc::vi2d& pos = snake.body[i];
-			nnInput[pos.x + pos.y * size] = 1;
-		}
-		nnInput[head.x + head.y * size] = -2;
+		nnInput[head.x + head.y * size] = 1;
 
 		nnInput[size2] = 0;
 		nnInput[size2+1] = 0;
@@ -113,9 +114,9 @@ class Window : public olc::PixelGameEngine
 		nnInput[size2+3] = 0;
 		nnInput[size2+snake.direction] = 1;
 
-		for (olc::vi2d& apple : apples) {
+		/*for (olc::vi2d& apple : apples) {
 			nnInput[apple.x + apple.y * size] = -1.0f;
-		}
+		}*/
 	}
 
 	void draw(DenseSnake& snake) {
@@ -213,6 +214,7 @@ public:
 				if (snake.body[0] == apple) {
 					apple = randpos();
 					snake.fitness++;
+					snake.grow = true;
 					break;
 				}
 			}
