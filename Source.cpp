@@ -16,9 +16,11 @@ public:
 	void moveForward() {
 		olc::vi2d headPos = body[0];
 
-		if (!grow) {
-			body.pop_back();
+		if (grow) {
 			grow = false;
+		}
+		else {
+			body.pop_back();
 		}
 		
 		switch (direction) {
@@ -37,7 +39,6 @@ public:
 		}
 
 		body.insert(body.begin(), headPos);
-
 	}
 
 	void turnLeft() {
@@ -89,16 +90,17 @@ public:
 class Window : public olc::PixelGameEngine
 {
 
-	std::vector<int> nnShape = { size2+4, 200, 50, 3 };
+	std::vector<int> nnShape = { size2+4, 3 };
 	std::vector<float> nnInput;
 
 	std::vector<olc::vi2d> apples;
 	int nIters = 1;
 	int nAgents = 100;
-	const int maxRounds = 50;
+	const int maxRounds = 500;
 	int rounds = 0;
 	std::vector<DenseSnake> snakes;
 	int snakeIndex = 0;
+	float totalElapsed = 0;
 
 	void prepareInput() {
 		auto& snake = snakes[snakeIndex];
@@ -192,6 +194,14 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+		const float timeout = 0.25f;
+		if (totalElapsed < timeout) {
+			totalElapsed += fElapsedTime;
+			return true;
+		}
+		else {
+			totalElapsed -= timeout;
+		}
 		
 		if (snakeIndex == snakes.size()) {
 			std::cout << "NEW GEN\n";
