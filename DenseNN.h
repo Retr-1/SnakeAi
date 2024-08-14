@@ -10,6 +10,7 @@ float sigmoid(float x) {
 class NeuralNetwork {
 	// Dense Neural Network
 	std::vector<std::vector<std::vector<float>>> weights;
+	std::vector<std::vector<float>> biases;
 	std::vector<int> shape;
 	std::vector<std::vector<float>> values;
 
@@ -31,9 +32,14 @@ public:
 				values[i].push_back(0.0f);
 			}
 		}
+
+		for (int i = 1; i < shape.size(); i++) {
+			biases.push_back(std::vector<float>());
+			for (int j = 0; j < shape[i]; j++) {
+				biases[i - 1].push_back(random2());
+			}
+		}
 	}
-	
-	NeuralNetwork() {};
 
 	std::vector<float>& evaluate(std::vector<float>& input) {
 		for (int i = 0; i < shape[0]; i++) {
@@ -46,6 +52,7 @@ public:
 				for (int a = 0; a < shape[layer - 1]; a++) {
 					sum += values[layer - 1][a] * weights[layer - 1][a][b];
 				}
+				sum += biases[layer - 1][b];
 				values[layer][b] = sigmoid(sum);
 			}
 		}
@@ -53,8 +60,7 @@ public:
 		return values[shape.size() - 1];
 	}
 
-	void mutate(float chance) {
-		const float lr = 0.2f;
+	void mutate(float chance, float lr=0.2f) {
 		for (int i = 0; i < shape.size() - 1; i++) {
 			for (int j = 0; j < shape[i]; j++) {
 				for (int k = 0; k < shape[i + 1]; k++) {
@@ -68,6 +74,11 @@ public:
 						weights[i][j][k] += random2() * lr;
 					}
 				}
+			}
+		}
+		for (int i = 1; i < shape.size(); i++) {
+			for (int j = 0; j < shape[i]; j++) {
+				biases[i - 1][j] += random2() * lr;
 			}
 		}
 	}
@@ -84,6 +95,17 @@ public:
 						child.weights[i][j][k] = partner.weights[i][j][k];
 					}
 				}
+			}
+		}
+		for (int i = 1; i < shape.size(); i++) {
+			for (int j = 0; j < shape[i]; j++) {
+				if (random() > 0.5f) {
+					child.biases[i - 1][j] = biases[i - 1][j];
+				}
+				else {
+					child.biases[i - 1][j] = partner.biases[i - 1][j];
+				}
+				
 			}
 		}
 		return child;

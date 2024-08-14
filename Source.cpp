@@ -52,7 +52,6 @@ public:
 
 	DenseSnake(NeuralNetwork& brain) : brain(brain) {}
 	DenseSnake(std::vector<int>& shape) : brain(shape) {}
-	DenseSnake() {}
 
 	void decide(std::vector<float>& input) {
 		// Output:
