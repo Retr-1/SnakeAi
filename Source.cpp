@@ -199,6 +199,8 @@ public:
 
 int main()
 {
+	srand(std::time(0));
+
 	Window win;
 	if (win.Construct(size, size, 10, 10))
 		win.Start();
