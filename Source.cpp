@@ -4,6 +4,7 @@
 #include <algorithm>
 
 constexpr int size = 60;
+constexpr int size2 = size * size;
 
 class Snake {
 public:
@@ -83,32 +84,34 @@ public:
 class Window : public olc::PixelGameEngine
 {
 
-	std::vector<int> nnShape = { 6, 100, 3 };
+	std::vector<int> nnShape = { size2+4, 100, 3 };
+	std::vector<float> nnInput;
 
 	std::vector<olc::vi2d> apples;
-	int nIters = 1;
+	int nIters = 10;
 	int nAgents = 100;
-	const int maxRounds = 500;
+	const int maxRounds = 50;
 	int rounds = 0;
 	std::vector<DenseSnake> snakes;
 	int snakeIndex = 0;
 
-	// INPUTS:
-	// 1. float, pos of head x
-	// 2. float, pos of head y
-	// 3. float*4, direction
-	std::vector<float> nnInput;
-
 	void prepareInput() {
 		auto& snake = snakes[snakeIndex];
 		olc::vi2d& head = snake.body[0];
-		nnInput[0] = head.x / (float)size;
-		nnInput[1] = head.y / (float)size;
-		nnInput[2] = 0;
-		nnInput[3] = 0;
-		nnInput[4] = 0;
-		nnInput[5] = 0;
-		nnInput[snake.direction + 2] = 1;
+		for (int i = 0; i < size2; i++) {
+			nnInput[i] = 0;
+		}
+		for (int i = 1; i < snake.body.size(); i++) {
+			olc::vi2d& pos = snake.body[i];
+			nnInput[pos.x + pos.y * size] = 1;
+		}
+		nnInput[head.x + head.y * size] = -1;
+
+		nnInput[size2] = 0;
+		nnInput[size2+1] = 0;
+		nnInput[size2+2] = 0;
+		nnInput[size2+3] = 0;
+		nnInput[size2+snake.direction] = 1;
 	}
 
 	void draw(DenseSnake& snake) {
@@ -145,7 +148,7 @@ class Window : public olc::PixelGameEngine
 
 	void makeNextGeneration() {
 		// first n survive and make offspring
-		const int nSurvive = 20;
+		const int nSurvive = 10;
 		std::sort(snakes.begin(), snakes.end(), [](DenseSnake& lhs, DenseSnake& rhs) {return lhs.fitness > rhs.fitness;});
 
 		std::vector<DenseSnake> newGeneration;
@@ -176,7 +179,7 @@ public:
 			snake.body.push_back({ size / 2, size / 2 });
 			snakes.push_back(snake);
 		}
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 100; i++) {
 			apples.push_back(randpos());
 		}
 		return true;
