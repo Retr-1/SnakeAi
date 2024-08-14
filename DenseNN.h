@@ -32,6 +32,8 @@ public:
 			}
 		}
 	}
+	
+	NeuralNetwork() {};
 
 	std::vector<float>& evaluate(std::vector<float>& input) {
 		for (int i = 0; i < shape[0]; i++) {
