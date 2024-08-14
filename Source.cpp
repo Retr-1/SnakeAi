@@ -84,12 +84,12 @@ public:
 class Window : public olc::PixelGameEngine
 {
 
-	std::vector<int> nnShape = { 2, 100, 3 };
+	std::vector<int> nnShape = { 3, 100, 3 };
 
 	olc::vi2d apple;
 	int nIters = 1;
 	int nAgents = 100;
-	const int maxRounds = 1000;
+	const int maxRounds = 500;
 	int rounds = 0;
 	std::vector<DenseSnake> snakes;
 	int snakeIndex = 0;
@@ -97,6 +97,7 @@ class Window : public olc::PixelGameEngine
 	// INPUTS:
 	// 1. float, pos of head x
 	// 2. float, pos of head y
+	// 3. direction
 	std::vector<float> nnInput;
 
 	void prepareInput() {
@@ -104,6 +105,7 @@ class Window : public olc::PixelGameEngine
 		olc::vi2d& head = snake.body[0];
 		nnInput[0] = head.x / (float)size;
 		nnInput[1] = head.y / (float)size;
+		nnInput[2] = snake.direction / 4.0f;
 	}
 
 	void draw(DenseSnake& snake) {
@@ -190,7 +192,7 @@ public:
 				snakeIndex++;
 				rounds = 0;
 				std::cout << "NEW SNAKE\n";
-				break;
+				goto END;
 			}
 			if (snake.body[0] == apple) {
 				apple = randpos();
@@ -198,8 +200,10 @@ public:
 			}
 			rounds++;
 		}
+
 		draw();
 
+	END:;
 		return true;
 	}
 };
