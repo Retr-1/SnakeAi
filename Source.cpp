@@ -85,7 +85,7 @@ class Window : public olc::PixelGameEngine
 
 	std::vector<int> nnShape = { 6, 100, 3 };
 
-	olc::vi2d apple;
+	std::vector<olc::vi2d> apples;
 	int nIters = 1;
 	int nAgents = 100;
 	const int maxRounds = 500;
@@ -120,7 +120,9 @@ class Window : public olc::PixelGameEngine
 	void draw() {
 		Clear(olc::BLACK);
 		draw(snakes[snakeIndex]);
-		Draw(apple, olc::DARK_RED);
+		for (olc::vi2d& apple : apples) {
+			Draw(apple, olc::DARK_RED);
+		}
 	}
 
 	bool doesSurvive(DenseSnake& snake) {
@@ -174,7 +176,9 @@ public:
 			snake.body.push_back({ size / 2, size / 2 });
 			snakes.push_back(snake);
 		}
-		apple = randpos();
+		for (int i = 0; i < 50; i++) {
+			apples.push_back(randpos());
+		}
 		return true;
 	}
 
@@ -182,6 +186,7 @@ public:
 	{
 		
 		if (snakeIndex == snakes.size()) {
+			std::cout << "NEW GEN\n";
 			snakeIndex = 0;
 			makeNextGeneration();
 		}
@@ -197,9 +202,12 @@ public:
 				std::cout << "NEW SNAKE\n";
 				goto END;
 			}
-			if (snake.body[0] == apple) {
-				apple = randpos();
-				snake.fitness++;
+			for (olc::vi2d& apple : apples) {
+				if (snake.body[0] == apple) {
+					apple = randpos();
+					snake.fitness++;
+					break;
+				}
 			}
 			rounds++;
 		}
