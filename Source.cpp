@@ -84,7 +84,7 @@ public:
 class Window : public olc::PixelGameEngine
 {
 
-	std::vector<int> nnShape = { 3, 100, 3 };
+	std::vector<int> nnShape = { 6, 100, 3 };
 
 	olc::vi2d apple;
 	int nIters = 1;
@@ -97,7 +97,7 @@ class Window : public olc::PixelGameEngine
 	// INPUTS:
 	// 1. float, pos of head x
 	// 2. float, pos of head y
-	// 3. direction
+	// 3. float*4, direction
 	std::vector<float> nnInput;
 
 	void prepareInput() {
@@ -105,7 +105,11 @@ class Window : public olc::PixelGameEngine
 		olc::vi2d& head = snake.body[0];
 		nnInput[0] = head.x / (float)size;
 		nnInput[1] = head.y / (float)size;
-		nnInput[2] = snake.direction / 4.0f;
+		nnInput[2] = 0;
+		nnInput[3] = 0;
+		nnInput[4] = 0;
+		nnInput[5] = 0;
+		nnInput[snake.direction + 2] = 1;
 	}
 
 	void draw(DenseSnake& snake) {
