@@ -9,7 +9,6 @@ class Snake {
 public:
 	std::vector<olc::vi2d> body;
 	int direction = 0;
-	int fitness = 0;
 	//static olc::vi2d dirMv[4];
 
 	void moveForward() {
@@ -48,6 +47,7 @@ public:
 class DenseSnake : public Snake {
 public:
 	NeuralNetwork brain;
+	int fitness = 0;
 
 	DenseSnake(NeuralNetwork& brain) : brain(brain) {}
 	DenseSnake(std::vector<int>& shape) : brain(shape) {}
@@ -142,7 +142,7 @@ class Window : public olc::PixelGameEngine
 		for (int i = 0; i < nAgents; i++) {
 			auto& parent1 = snakes[randint(0, nSurvive)];
 			auto& parent2 = snakes[randint(0, nSurvive)];
-			auto&& child = parent1.reproduce(parent2);
+			auto child = parent1.reproduce(parent2);
 			child.body.push_back({ size / 2,size / 2 });
 			newGeneration.push_back(child);
 		}
@@ -161,6 +161,11 @@ public:
 	{
 		// Called once at the start, so create things here
 		nnInput.resize(nnShape[0]);
+		for (int i = 0; i < nAgents; i++) {
+			auto snake = DenseSnake(nnShape);
+			snake.body.push_back({ size / 2, size / 2 });
+			snakes.push_back(snake);
+		}
 		return true;
 	}
 
@@ -195,7 +200,7 @@ public:
 int main()
 {
 	Window win;
-	if (win.Construct(size, size, 20, 20))
+	if (win.Construct(size, size, 10, 10))
 		win.Start();
 	return 0;
 }
