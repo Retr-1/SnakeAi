@@ -42,6 +42,7 @@ public:
 		direction++;
 		direction %= 4;
 	}
+
 };
 
 class DenseSnake : public Snake {
@@ -88,6 +89,8 @@ class Window : public olc::PixelGameEngine
 	olc::vi2d apple;
 	int nIters = 1;
 	int nAgents = 100;
+	const int maxRounds = 1000;
+	int rounds = 0;
 	std::vector<DenseSnake> snakes;
 	int snakeIndex = 0;
 
@@ -166,6 +169,7 @@ public:
 			snake.body.push_back({ size / 2, size / 2 });
 			snakes.push_back(snake);
 		}
+		apple = randpos();
 		return true;
 	}
 
@@ -182,16 +186,19 @@ public:
 			prepareInput();
 			snake.decide(nnInput);
 			snake.moveForward();
-			if (!doesSurvive(snake)) {
+			if (!doesSurvive(snake) || rounds >= maxRounds) {
+				snakeIndex++;
+				rounds = 0;
+				std::cout << "NEW SNAKE\n";
 				break;
 			}
 			if (snake.body[0] == apple) {
 				apple = randpos();
 				snake.fitness++;
 			}
+			rounds++;
 		}
 		draw();
-		snakeIndex++;
 
 		return true;
 	}
